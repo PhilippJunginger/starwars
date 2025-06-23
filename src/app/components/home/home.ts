@@ -1,0 +1,61 @@
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FilmCard } from "../film-card/film-card";
+import { StarWars } from '../../services/star-wars';
+import { Movie } from '../../types/movie';
+import { FilterField } from "../filter-field/filter-field";
+import { FilterType } from '../../types/filterType';
+
+@Component({
+  selector: 'app-home',
+  imports: [FilmCard, FilterField, CommonModule],
+  templateUrl: './home.html',
+})
+export class Home implements OnInit {
+  readonly FilterType = FilterType;
+  starWars = inject(StarWars);
+  movies: Movie[] = [];
+  selectedType = signal(FilterType.NONE);
+  filterValue: string = "";
+
+  hasMinLengthError: boolean = false;
+  isNoSelection = computed(() => this.selectedType() === FilterType.NONE);
+  isCharacterFieldRequired = computed(() => this.selectedType() === FilterType.CHAR);
+  isVehicleFieldRequired = computed(() => this.selectedType() === FilterType.VEHICLE);
+  isStarshipFieldRequired = computed(() => this.selectedType() === FilterType.SHIP);
+
+  async ngOnInit(): Promise<void> {
+    this.movies = await this.starWars.getAllStarWarsMovies();
+  }
+
+  updateSelectedFilterType(type: FilterType) {
+    if (this.selectedType() !== type) {
+      this.selectedType.set(type);
+      this.filterValue = '';
+    }
+  }
+
+  updateFilterValue(value: string) {
+    this.hasMinLengthError = value.length < 3;
+    this.filterValue = value;
+  }
+
+  async handleSearch() {
+    if (this.filterValue.length < 3) {
+      this.hasMinLengthError = true;
+      return;
+    }
+
+    switch (this.selectedType()) {
+      case FilterType.CHAR:
+        this.movies = await this.starWars.getMoviesWithCharacter(this.filterValue, this.movies)
+        break;
+      case FilterType.VEHICLE:
+        this.movies = await this.starWars.getMoviesWithCharacter(this.filterValue, this.movies)
+        break;
+      case FilterType.SHIP:
+        this.movies = await this.starWars.getMoviesWithStarships(this.filterValue, this.movies)
+        break;
+    }
+  }
+}
