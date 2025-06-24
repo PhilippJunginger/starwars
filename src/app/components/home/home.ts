@@ -15,11 +15,12 @@ export class Home implements OnInit {
   readonly FilterType = FilterType;
   starWars = inject(StarWars);
   movies: Movie[] = [];
-  selectedType = signal(FilterType.NONE);
-  filterValue: string = "";
+  selectedType = signal<FilterType | undefined>(undefined);
+  searchValue: string = "";
+  searchResults: string[] = [];
 
   hasMinLengthError: boolean = false;
-  isNoSelection = computed(() => this.selectedType() === FilterType.NONE);
+  isNoSelection = computed(() => this.selectedType() === undefined);
   isCharacterFieldRequired = computed(() => this.selectedType() === FilterType.CHAR);
   isVehicleFieldRequired = computed(() => this.selectedType() === FilterType.VEHICLE);
   isStarshipFieldRequired = computed(() => this.selectedType() === FilterType.SHIP);
@@ -31,31 +32,26 @@ export class Home implements OnInit {
   updateSelectedFilterType(type: FilterType) {
     if (this.selectedType() !== type) {
       this.selectedType.set(type);
-      this.filterValue = '';
+      this.searchValue = '';
     }
   }
 
   updateFilterValue(value: string) {
     this.hasMinLengthError = value.length < 3;
-    this.filterValue = value;
+    this.searchValue = value;
   }
 
   async handleSearch() {
-    if (this.filterValue.length < 3) {
-      this.hasMinLengthError = true;
+    const selectedType = this.selectedType();
+
+    if (this.hasMinLengthError || selectedType === undefined) {
       return;
     }
 
-    switch (this.selectedType()) {
-      case FilterType.CHAR:
-        this.movies = await this.starWars.getMoviesWithCharacter(this.filterValue, this.movies)
-        break;
-      case FilterType.VEHICLE:
-        this.movies = await this.starWars.getMoviesWithCharacter(this.filterValue, this.movies)
-        break;
-      case FilterType.SHIP:
-        this.movies = await this.starWars.getMoviesWithStarships(this.filterValue, this.movies)
-        break;
-    }
+    this.searchResults = await this.starWars.getSearchResults(selectedType, this.movies, this.searchValue)    
+  }
+
+  isSearchResult(movie: Movie) {
+    return this.searchResults.includes(movie.title);
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Movie } from '../types/movie';
+import { Movie, MovieProps } from '../types/movie';
+import { FilterType } from '../types/filterType';
 
 @Injectable({
   providedIn: 'root'
@@ -17,28 +18,40 @@ export class StarWars {
     return (await data).results
   }
 
-  filterMoviesByUrl(movies: Movie[], movieProps: Exclude<keyof Movie, 'title' | 'opening_crawl'> , matchingUrls: string[]): Movie[] {
-    return movies.filter(movie => matchingUrls.some((url) => movie[movieProps].includes(url)))
-  }
-
   private async getResultUrls(baseUrl: string, value: string) {
     const response = await fetch(`${baseUrl}?search=${value}`);
     const data: Promise<{ results: { url: string }[] }> = await response.json();
     return (await data).results.map((result) => result.url);
   }
 
-  async getMoviesWithCharacter(value: string, movies: Movie[]) {
-    const characterUrls = await this.getResultUrls(this.charactersBaseUrl, value);
-    return this.filterMoviesByUrl(movies, 'characters', characterUrls);
+  async getSearchResults(type: FilterType, movies: Movie[], searchValue: string) {
+    const characterUrls = await this.getResultUrls(this.charactersBaseUrl, searchValue);
+    return this.filterMoviesByUrl(movies, this.getMoviePropForType(type), characterUrls);
   }
 
-  async getMoviesWithVehicle(value: string, movies: Movie[]) {
-    const vehicleUrls = await this.getResultUrls(this.vehiclesBaseUrl, value);
-    return this.filterMoviesByUrl(movies, 'vehicles', vehicleUrls);
+  filterMoviesByUrl(movies: Movie[], movieProps: MovieProps , matchingUrls: string[]): string[] {
+    return movies.filter(movie => matchingUrls.some((url) => movie[movieProps].includes(url))).map((movie) => movie.title)
   }
 
-  async getMoviesWithStarships(value: string, movies: Movie[]) {
-    const starshipUrls = await this.getResultUrls(this.starshipsBaseUrl, value);
-    return this.filterMoviesByUrl(movies, 'starships', starshipUrls);
+  getBaseUrlForFilterType(type: FilterType) {
+    switch (type) {
+      case FilterType.CHAR:
+        return this.charactersBaseUrl;
+      case FilterType.VEHICLE:
+        return this.vehiclesBaseUrl;
+      case FilterType.SHIP:
+        return this.starshipsBaseUrl;
+    }
+  }
+
+  getMoviePropForType(type: FilterType): MovieProps {
+     switch (type) {
+      case FilterType.CHAR:
+        return 'characters';
+      case FilterType.VEHICLE:
+        return 'vehicles';
+      case FilterType.SHIP:
+        return 'starships';
+    }
   }
 }

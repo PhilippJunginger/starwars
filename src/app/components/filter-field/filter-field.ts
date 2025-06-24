@@ -5,7 +5,7 @@ import { Component, input, output } from '@angular/core';
   imports: [],
   template: `
     <div class="form-group">
-      <label for={{this.label()}} >{{this.label()}}</label>
+      <label for={{this.label()}} >{{this.label()}}{{this.isRequired() ? '*' : ''}}</label>
       <input id={{this.label()}} required={{this.isRequired()}} minlength="3" type="text" class="form-control" (input)="handleFieldInput($event)" value="{{this.value()}}"/>
 
       @if (this.hasMinLengthError()) {
