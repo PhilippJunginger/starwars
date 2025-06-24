@@ -5,7 +5,7 @@ import { FilterType } from '../types/filterType';
 @Injectable({
   providedIn: 'root'
 })
-export class StarWars {
+export class StarWarsService {
   private readonly filmsBaseUrl = 'https://swapi.py4e.com/api/films'
   private readonly charactersBaseUrl = 'https://swapi.py4e.com/api/people'
   private readonly vehiclesBaseUrl = 'https://swapi.py4e.com/api/vehicles'
@@ -18,22 +18,22 @@ export class StarWars {
     return (await data).results
   }
 
+  async getSearchResults(type: FilterType, movies: Movie[], searchValue: string) {
+    const characterUrls = await this.getResultUrls(this.getBaseUrlForFilterType(type), searchValue);
+    return this.filterMoviesByUrl(movies, this.getMoviePropForType(type), characterUrls);
+  }
+
   private async getResultUrls(baseUrl: string, value: string) {
     const response = await fetch(`${baseUrl}?search=${value}`);
     const data: Promise<{ results: { url: string }[] }> = await response.json();
     return (await data).results.map((result) => result.url);
   }
 
-  async getSearchResults(type: FilterType, movies: Movie[], searchValue: string) {
-    const characterUrls = await this.getResultUrls(this.charactersBaseUrl, searchValue);
-    return this.filterMoviesByUrl(movies, this.getMoviePropForType(type), characterUrls);
-  }
-
-  filterMoviesByUrl(movies: Movie[], movieProps: MovieProps , matchingUrls: string[]): string[] {
+  private filterMoviesByUrl(movies: Movie[], movieProps: MovieProps , matchingUrls: string[]): string[] {
     return movies.filter(movie => matchingUrls.some((url) => movie[movieProps].includes(url))).map((movie) => movie.title)
   }
 
-  getBaseUrlForFilterType(type: FilterType) {
+  private getBaseUrlForFilterType(type: FilterType) {
     switch (type) {
       case FilterType.CHAR:
         return this.charactersBaseUrl;
@@ -44,7 +44,7 @@ export class StarWars {
     }
   }
 
-  getMoviePropForType(type: FilterType): MovieProps {
+  private getMoviePropForType(type: FilterType): MovieProps {
      switch (type) {
       case FilterType.CHAR:
         return 'characters';

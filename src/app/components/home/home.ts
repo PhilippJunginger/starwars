@@ -1,7 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FilmCard } from "../film-card/film-card";
-import { StarWars } from '../../services/star-wars';
+import { StarWarsService } from '../../services/star-wars';
 import { Movie } from '../../types/movie';
 import { FilterField } from "../filter-field/filter-field";
 import { FilterType } from '../../types/filterType';
@@ -13,7 +13,7 @@ import { FilterType } from '../../types/filterType';
 })
 export class Home implements OnInit {
   readonly FilterType = FilterType;
-  starWars = inject(StarWars);
+  starWars = inject(StarWarsService);
   movies: Movie[] = [];
   selectedType = signal<FilterType | undefined>(undefined);
   searchValue: string = "";
@@ -49,6 +49,7 @@ export class Home implements OnInit {
     }
 
     this.searchResults = await this.starWars.getSearchResults(selectedType, this.movies, this.searchValue)    
+    console.log(this.searchResults);
   }
 
   isSearchResult(movie: Movie) {
